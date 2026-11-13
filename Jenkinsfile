@@ -24,20 +24,20 @@ pipeline {
 
         stage('Build Images') {
             steps {
-                sh 'docker compose build'
+                sh 'docker compose --env-file /etc/fullstack-app.env build'
             }
         }
 
         stage('Deploy Application') {
             steps {
-                sh 'docker compose up -d --build --remove-orphans'
+                sh 'docker compose --env-file /etc/fullstack-app.env up -d --build --remove-orphans'
             }
         }
 
         stage('Verify Containers') {
             steps {
                 sh '''
-                    docker compose ps
+                    docker compose --env-file /etc/fullstack-app.env ps
                     docker inspect fullstack_postgres \
                       --format='PostgreSQL status: {{.State.Status}}'
                     docker inspect fullstack_backend \
@@ -60,7 +60,7 @@ pipeline {
                         fi
                         if [ "$i" -eq 30 ]; then
                             echo "API test failed."
-                            docker compose logs --tail=100
+                            docker compose --env-file /etc/fullstack-app.env logs --tail=100
                             exit 1
                         fi
                         sleep 5
@@ -78,7 +78,7 @@ pipeline {
             echo 'Build, deployment, and HTTP checks completed successfully.'
         }
         failure {
-            sh 'docker compose logs --tail=100 || true'
+            sh 'docker compose --env-file /etc/fullstack-app.env logs --tail=100 || true'
         }
     }
 }
